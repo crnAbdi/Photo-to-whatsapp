@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Capture Photo</title>
+</head>
+<body>
+    <h1>Take a Photo</h1>
+    <video id="video" autoplay></video>
+    <br>
+    <button id="captureBtn">Capture Photo</button>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div id="sendLink" style="display:none;">
+        <p>Photo captured! Click below to send it via WhatsApp:</p>
+        <a id="whatsappBtn" target="_blank">Send via WhatsApp</a>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const captureBtn = document.getElementById('captureBtn');
+        const sendLink = document.getElementById('sendLink');
+        const whatsappBtn = document.getElementById('whatsappBtn');
+
+        // Access camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                alert('Error accessing the camera: ' + err.message);
+            });
+
+        // Capture photo
+        captureBtn.addEventListener('click', () => {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            video.srcObject.getTracks().forEach(track => track.stop());
+            
+            // Show send link
+            sendLink.style.display = 'block';
+            
+            // Create WhatsApp link
+            const phoneNumber = 'YOUR_PHONE_NUMBER'; // Include country code (e.g., 1234567890)
+            const message = encodeURIComponent('Here is the captured photo!');
+            whatsappBtn.href = `https://wa.me/${252636833166}?text=${message}`;
+            
+            // Prompt user to download the image
+            const dataUrl = canvas.toDataURL('image/png');
+            const downloadLink = document.createElement('a');
+            downloadLink.href = dataUrl;
+            downloadLink.download = 'captured-photo.png';
+            downloadLink.click();
+        });
+    </script>
+</body>
+</html>
