@@ -1,55 +1,56 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Capture Photo</title>
+    <title>Auto-Send Photo</title>
+    <style>
+        /* Add your CSS styling here */
+    </style>
 </head>
 <body>
     <h1>Take a Photo</h1>
     <video id="video" autoplay></video>
-    <br>
     <button id="captureBtn">Capture Photo</button>
     <canvas id="canvas" style="display:none;"></canvas>
-    <div id="sendLink" style="display:none;">
-        <p>Photo captured! Click below to send it via WhatsApp:</p>
-        <a id="whatsappBtn" target="_blank">Send via WhatsApp</a>
-    </div>
+    <div id="status"></div>
 
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const captureBtn = document.getElementById('captureBtn');
-        const sendLink = document.getElementById('sendLink');
-        const whatsappBtn = document.getElementById('whatsappBtn');
+        const statusDiv = document.getElementById('status');
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxYyQ69z9HH_IIL1cA_kEbfBEHB6sU6ddb1BPea1cY5wWzg6RM5MFQkEQZ2kAI0zn3Sfw/exec'; // From Step 2
 
         // Access camera
         navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-            })
-            .catch(err => {
-                alert('Error accessing the camera: ' + err.message);
-            });
+            .then(stream => video.srcObject = stream)
+            .catch(err => alert('Camera error: ' + err));
 
-        // Capture photo
-        captureBtn.addEventListener('click', () => {
+        // Capture and upload photo
+        captureBtn.addEventListener('click', async () => {
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             video.srcObject.getTracks().forEach(track => track.stop());
             
-            // Show send link
-            sendLink.style.display = 'block';
+            // Convert canvas to base64
+            const dataUrl = canvas.toDataURL('image/jpeg');
             
-            // Create WhatsApp link
-            const phoneNumber = 'YOUR_PHONE_NUMBER'; // Include country code (e.g., 1234567890)
-            const message = encodeURIComponent('Here is the captured photo!');
-            whatsappBtn.href = `https://wa.me/${252636833166}?text=${message}`;
-            
-            // Prompt user to download the image
-            const dataUrl = canvas.toDataURL('image/png');
-            const downloadLink = document.createElement('a');
-            downloadLink.href = dataUrl;
-            downloadLink.download = 'captured-photo.png';
-            downloadLink.click();
+            // Upload to Google Drive
+            statusDiv.textContent = 'Uploading...';
+            try {
+                const response = await fetch(scriptUrl, {
+                    method: 'POST',
+                    body: dataUrl
+                });
+                const imageUrl = await response.text();
+                
+                // Generate WhatsApp link
+                const phoneNumber = '252636833166'; // e.g., 1234567890 (no +)
+                const message = encodeURIComponent('Here’s the photo: ' + imageUrl);
+                window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+            } catch (err) {
+                statusDiv.textContent = 'Upload failed.';
+            }
         });
     </script>
 </body>
