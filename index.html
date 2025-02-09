@@ -37,31 +37,29 @@
 
   // Capture and upload photo
   captureBtn.addEventListener('click', async () => {
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    video.srcObject.getTracks().forEach(track => track.stop());
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  video.srcObject.getTracks().forEach(track => track.stop());
 
-    // Extract Base64 data
-    const base64Data = canvas.toDataURL('image/jpeg').split(',')[1];
+  // 1. Extract Base64 data (remove "data:image/jpeg;base64,")
+  const base64Data = canvas.toDataURL('image/jpeg').split(',')[1];
 
-    // Upload to Google Drive
-    statusDiv.textContent = 'Uploading...';
-    try {
-      const response = await fetch(scriptUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: base64Data
-      });
-      
-      if (!response.ok) throw new Error('Server error');
-      
-      const imageUrl = await response.text();
-      const phoneNumber = '252636833166';
-      window.open(`https://wa.me/${phoneNumber}?text=Photo: ${encodeURIComponent(imageUrl)}`, '_blank');
-    } catch (err) {
-      statusDiv.textContent = 'Upload failed: ' + err.message;
-      console.error('Error:', err);
-    }
-  });
+  try {
+    // 2. Send the Base64 string
+    const response = await fetch(scriptUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: base64Data // Send only the Base64 payload
+    });
+
+    if (!response.ok) throw new Error("Upload failed");
+    const imageUrl = await response.text();
+
+    // 3. Open WhatsApp
+    window.open(`https://wa.me/252636833166?text=Photo: ${encodeURIComponent(imageUrl)}`, '_blank');
+  } catch (err) {
+    statusDiv.textContent = 'Error: ' + err.message;
+  }
+});
 </script>
 </body>
 </html>
